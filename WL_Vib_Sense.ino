@@ -5,7 +5,7 @@
 #include <EEPROM.h>
 #include <WebServer.h>
 #include <HardwareSerial.h>
-HardwareSerial MySerial(1); // use uart2
+//HardwareSerial MySerial(1); // use uart2
 
 #define MESSAGE_MAX_LEN 256
 
@@ -66,7 +66,9 @@ char messageBuf[MESSAGE_MAX_LEN];
 
 void setup() {
   Serial.begin(9600);
-  MySerial.begin(19200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit​
+  Serial1.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
+  //MySerial.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
+  
   while(!Serial);
   WiFi.persistent(false);
   WiFi.disconnect(true);
@@ -112,16 +114,16 @@ void loop() {
   unsigned long timeToWait = millis()-waitTimer;
   
   
-   if (MySerial.available())
+   if (Serial1.available())
   {
-    data[0] = MySerial.read();
+    data[0] = Serial1.read();
     delay(k);
    if(data[0]==0x7E)
     {
-    while (!MySerial.available());
+    while (!Serial1.available());
     for ( i = 1; i< 54; i++)
       {
-      data[i] = MySerial.read();
+      data[i] = Serial1.read();
       delay(1);
       }
     if(data[15]==0x7F)  /////// to check if the recive data is correct
