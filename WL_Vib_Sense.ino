@@ -28,6 +28,8 @@ int i;
 unsigned long APTimer = 0;
 unsigned int APInterval = 120000;
 unsigned int waitTimer = 0;
+unsigned long waitTime = 0;
+
 
 //*********SSID and Pass for AP**************//
 const char* ssidAPConfig PROGMEM = "adminesp32";
@@ -199,8 +201,12 @@ else
 }
     }
   }
-  Serial.print("waited for: '/t' ");
-  Serial.println(timeToWait/1000);
+  if(millis-waitTime>1000){
+    Serial.print("waited for: \t ");
+    Serial.println(timeToWait/1000);
+    waitTime = millis();
+  }
+  
 }
 
   
