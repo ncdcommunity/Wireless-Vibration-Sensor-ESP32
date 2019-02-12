@@ -5,7 +5,7 @@
 #include <EEPROM.h>
 #include <WebServer.h>
 #include <HardwareSerial.h>
-//HardwareSerial MySerial(1); // use uart2
+//HardwareSerial Serial1(1); // use uart2
 
 #define MESSAGE_MAX_LEN 256
 
@@ -20,7 +20,7 @@ WebServer server(80);
 StaticJsonBuffer<234> jsonBuffer;
 
 //*********ZigBee Frame**************/
-uint8_t data[29];
+ uint8_t data[54];
 int k = 10;
 int i;
 
@@ -67,8 +67,8 @@ const char HTTP_PAGE_GOHOME[] PROGMEM = "<H2><a href=\"/\">go home</a></H2><br>"
 char messageBuf[MESSAGE_MAX_LEN]; 
 
 void setup() {
-  Serial.begin(9600);
-  Serial1.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
   //MySerial.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
   
   while(!Serial);
@@ -116,16 +116,16 @@ void loop() {
   unsigned long timeToWait = millis()-waitTimer;
   
   
-   if (Serial1.available())
+   if (Serial2.available())
   {
-    data[0] = Serial1.read();
+    data[0] = Serial2.read();
     delay(k);
    if(data[0]==0x7E)
     {
-    while (!Serial1.available());
+    while (!Serial2.available());
     for ( i = 1; i< 54; i++)
       {
-      data[i] = Serial1.read();
+      data[i] = Serial2.read();
       delay(1);
       }
     if(data[15]==0x7F)  /////// to check if the recive data is correct
@@ -201,7 +201,7 @@ else
 }
     }
   }
-  if(millis-waitTime>1000){
+  if(millis()-waitTime>1000){
     Serial.print("waited for: \t ");
     Serial.println(timeToWait/1000);
     waitTime = millis();
