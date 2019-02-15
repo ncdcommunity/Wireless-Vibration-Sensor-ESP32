@@ -17,7 +17,7 @@
 
 //************** Auxillary functions******************//
 WebServer server(80);
-StaticJsonBuffer<234> jsonBuffer;
+StaticJsonBuffer<256> jsonBuffer;
 
 //*********ZigBee Frame**************/
  uint8_t data[54];
@@ -56,19 +56,18 @@ const char HTTP_CONTENT5_START[] PROGMEM= "<INPUT type=\"submit\">&nbsp&nbsp&nbs
 const char HTTP_FORM_END[] PROGMEM= "</FORM>";
 const char HTTP_SCRIPT[] PROGMEM= "<script>function c(l){document.getElementById('ssid').value=l.innerText||l.textContent;document.getElementById('pass').focus();}</script>";
 const char HTTP_END[] PROGMEM= "</body></html>";
-const char* messageStatic PROGMEM= "{\"staticSet\":\"staticValue\", \"staticIP\":\"%s\", \"staticGate\":\"%s\", \"staticSub\":\"%s\",\"ssidStatic\":\"%s\",\"staticPass\":\"%s\"}";
-const char* messageDhcp PROGMEM= "{\"dhcpSet\":\"dhcpValue\",\"ssidDHCP\":\"%s\", \"passDHCP\":\"%s\"}";
+const char* messageStatic PROGMEM= "{\"staticSet\":\"staticValue\",\"staticIP\":\"%s\",\"staticGate\":\"%s\",\"staticSub\":\"%s\",\"ssidStatic\":\"%s\",\"staticPass\":\"%s\"}";
+const char* messageDhcp PROGMEM= "{\"dhcpSet\":\"dhcpValue\",\"ssidDHCP\":\"%s\",\"passDHCP\":\"%s\"}";
 
 const char HTTP_PAGE_STATIC[] PROGMEM = "<p>{s}<br>{g}<br>{n}<br></p>";
 const char HTTP_PAGE_DHCP[] PROGMEM = "<p>{s}</p>";
 const char HTTP_PAGE_WiFi[] PROGMEM = "<p>{s}<br>{p}</p>";
 const char HTTP_PAGE_GOHOME[] PROGMEM = "<H2><a href=\"/\">go home</a></H2><br>";
 
-char messageBuf[MESSAGE_MAX_LEN]; 
 
 void setup() {
-  Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
+  Serial.begin(9600);
+  Serial2.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
   //MySerial.begin(115200, SERIAL_8N1, 16, 17); // pins 16 rx2, 17 tx2, 19200 bps, 8 bits no parity 1 stop bit
   
   while(!Serial);
@@ -86,7 +85,8 @@ void setup() {
     }
     while(file.available()){
         debugLogData += char(file.read());
-    } 
+    }
+     
     file.close();
     if(debugLogData.length()>10){
        JsonObject& readRoot =jsonBuffer.parseObject(debugLogData);
@@ -118,12 +118,14 @@ void loop() {
   
    if (Serial2.available())
   {
+    Serial.println("Read Serial");
     data[0] = Serial2.read();
     delay(k);
    if(data[0]==0x7E)
     {
+    Serial.println("Got Packet");
     while (!Serial2.available());
-    for ( i = 1; i< 54; i++)
+    for ( i = 1; i< 55; i++)
       {
       data[i] = Serial2.read();
       delay(1);
@@ -135,7 +137,6 @@ void loop() {
   int16_t rms_x = ((uint16_t)(((data[24])<<16) + ((data[25])<<8) + (data[26]))/100);
   int16_t rms_y = ((uint16_t)(((data[27])<<16) + ((data[28])<<8) + (data[29]))/100);
   int16_t rms_z = ((uint16_t)(((data[30])<<16) + ((data[31])<<8) + (data[32]))/100);
-
   int16_t max_x = ((uint16_t)(((data[33])<<16) + ((data[34])<<8) + (data[35]))/100);
   int16_t max_y = ((uint16_t)(((data[36])<<16) + ((data[37])<<8) + (data[38]))/100);
   int16_t max_z = ((uint16_t)(((data[39])<<16) + ((data[40])<<8) + (data[41]))/100);
@@ -199,7 +200,9 @@ else
       delay(1);
     }
 }
-    }
+    }else{
+       Serial.println("Got invalid packet");
+      }
   }
   if(millis()-waitTime>1000){
     Serial.print("waited for: \t ");
@@ -248,6 +251,7 @@ void handleStatic(){
 //*************Helper 1 STATIC**************//
 
 void staticSet(){
+           char messageBuf[MESSAGE_MAX_LEN]; 
            String response=FPSTR(HTTP_PAGE_STATIC);
            response.replace("{s}",server.arg("ipv4static"));
            response.replace("{g}",server.arg("gateway"));
@@ -273,6 +277,7 @@ void staticSet(){
 //*************Helper 3 DHCP DEFAULT**************//
   
 void dhcpSetDefault(){
+           char messageBuf[MESSAGE_MAX_LEN]; 
            String response=FPSTR(HTTP_PAGE_DHCP);
            response.replace("{s}","192.168.4.1");
            response+=FPSTR(HTTP_PAGE_GOHOME);
@@ -343,8 +348,6 @@ void  staticAPConfig(String IPStatic, String gateway, String subnet, String ssid
       //*********hold IP octet**************//
       uint8_t ip0,ip1,ip2,ip3;
       //*********IP Char Array**************//
-      Serial.print(ssid);
-      Serial.print(pass);
       byte ip[4];
       parseBytes(IPStatic.c_str(),'.', ip, 4, 10);
       ip0 = (uint8_t)ip[0];
